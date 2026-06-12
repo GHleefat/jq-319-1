@@ -96,7 +96,8 @@ export default function ResultsPage() {
             {poll.title}
           </h1>
           <p className="text-charcoal/50">
-            共 {pollWithStats.totalParticipants} 人参与 ·{" "}
+            共 {pollWithStats.totalBallots} 票 ·{" "}
+            {pollWithStats.totalParticipants} 人参与 ·{" "}
             {pollWithStats.totalRatings} 次评分 · {poll.comments.length} 条评论
           </p>
         </motion.div>

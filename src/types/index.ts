@@ -21,6 +21,14 @@ export interface Vote {
   createdAt: string;
 }
 
+export interface Ballot {
+  id: string;
+  pollId: string;
+  outfitId: string;
+  userId: string;
+  createdAt: string;
+}
+
 export interface Comment {
   id: string;
   pollId: string;
@@ -37,6 +45,7 @@ export interface Poll {
   status: "active" | "ended";
   outfits: Outfit[];
   votes: Vote[];
+  ballots: Ballot[];
   comments: Comment[];
 }
 
@@ -45,6 +54,7 @@ export interface OutfitStats {
   participantCount: number;
   ratingCount: number;
   likeCount: number;
+  ballotCount: number;
   averageScore: number;
   totalScore: number;
 }
@@ -54,5 +64,6 @@ export type PollWithStats = Poll & {
   totalParticipants: number;
   totalRatings: number;
   totalLikes: number;
+  totalBallots: number;
   winnerId: string | null;
 };

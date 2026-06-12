@@ -1,4 +1,4 @@
-import type { User, Poll, Vote, Comment } from "@/types";
+import type { User, Poll, Vote, Ballot, Comment } from "@/types";
 import { generateId, getRandomImageUrl, getDefaultDeadline } from "./helpers";
 
 export const mockUsers: User[] = [
@@ -55,6 +55,7 @@ const createMockPoll = (
   }));
 
   const votes: Vote[] = [];
+  const ballots: Ballot[] = [];
   const comments: Comment[] = [];
 
   if (status === "ended") {
@@ -73,6 +74,17 @@ const createMockPoll = (
             ).toISOString(),
           });
         }
+      });
+
+      const selectedOutfitIndex = Math.floor(Math.random() * outfitCount);
+      ballots.push({
+        id: `ballot-${id}-${userIndex}`,
+        pollId: id,
+        outfitId: outfits[selectedOutfitIndex].id,
+        userId: user.id,
+        createdAt: new Date(
+          Date.now() - Math.random() * 86400000,
+        ).toISOString(),
       });
 
       if (Math.random() > 0.4) {
@@ -110,6 +122,14 @@ const createMockPoll = (
           ).toISOString(),
         });
       });
+
+      ballots.push({
+        id: `ballot-${id}-${userIndex}`,
+        pollId: id,
+        outfitId: outfits[userIndex % outfitCount].id,
+        userId: user.id,
+        createdAt: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+      });
     });
   }
 
@@ -121,6 +141,7 @@ const createMockPoll = (
     status,
     outfits,
     votes,
+    ballots,
     comments,
   };
 };

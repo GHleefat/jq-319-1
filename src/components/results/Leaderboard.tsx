@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Trophy, Heart, Star, Users } from "lucide-react";
+import { Trophy, Heart, Star, Users, Vote } from "lucide-react";
 import type { Outfit, OutfitStats } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -17,15 +17,16 @@ export default function Leaderboard({ outfits, stats }: LeaderboardProps) {
         participantCount: 0,
         ratingCount: 0,
         likeCount: 0,
+        ballotCount: 0,
         averageScore: 0,
         totalScore: 0,
       },
     }))
-    .sort((a, b) => b.stat.averageScore - a.stat.averageScore);
+    .sort((a, b) => b.stat.ballotCount - a.stat.ballotCount);
 
-  const maxScore = Math.max(
-    ...sortedOutfits.map((o) => o.stat.averageScore),
-    5,
+  const maxBallots = Math.max(
+    ...sortedOutfits.map((o) => o.stat.ballotCount),
+    1,
   );
 
   const getRankColor = (index: number) => {
@@ -89,10 +90,17 @@ export default function Leaderboard({ outfits, stats }: LeaderboardProps) {
           <div className="flex-1 min-w-0">
             <h4 className="font-medium mb-2">{outfit.name}</h4>
 
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1 text-wine-red font-bold">
+                <Vote className="w-4 h-4" />
+                <span>{stat.ballotCount} 票</span>
+              </div>
+            </div>
+
             <div className="w-full h-2 bg-charcoal/10 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${(stat.averageScore / maxScore) * 100}%` }}
+                animate={{ width: `${(stat.ballotCount / maxBallots) * 100}%` }}
                 transition={{ delay: 0.3 + index * 0.1, duration: 0.6 }}
                 className={cn(
                   "h-full rounded-full",

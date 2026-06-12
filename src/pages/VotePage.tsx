@@ -9,6 +9,8 @@ import {
   Share2,
   ChevronDown,
   Trophy,
+  Check,
+  Vote as VoteIcon,
 } from "lucide-react";
 import { usePollStore } from "@/store/usePollStore";
 import { useUserStore } from "@/store/useUserStore";
@@ -22,8 +24,14 @@ import { cn } from "@/lib/utils";
 export default function VotePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getPollById, addVote, addComment, checkAndUpdatePollStatus } =
-    usePollStore();
+  const {
+    getPollById,
+    addVote,
+    addComment,
+    addBallot,
+    getUserBallot,
+    checkAndUpdatePollStatus,
+  } = usePollStore();
   const { getCurrentUser, users, setCurrentUser } = useUserStore();
   const [showComments, setShowComments] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -60,6 +68,8 @@ export default function VotePage() {
   const pollWithStats = getPollWithStats(poll);
   const isEnded =
     poll.status === "ended" || new Date(poll.deadline) < new Date();
+  const userBallot =
+    id && currentUser ? getUserBallot(id, currentUser.id) : undefined;
 
   const handleRate = (outfitId: string, score: number, liked: boolean) => {
     if (!id || !currentUser || isEnded) return;
@@ -69,6 +79,11 @@ export default function VotePage() {
   const handleAddComment = (content: string) => {
     if (!id || !currentUser) return;
     addComment(id, currentUser.id, content);
+  };
+
+  const handleVote = (outfitId: string) => {
+    if (!id || !currentUser || isEnded) return;
+    addBallot(id, outfitId, currentUser.id);
   };
 
   const handleShare = () => {
@@ -177,6 +192,73 @@ export default function VotePage() {
               />
 
               {!isEnded && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="mt-6 bg-white p-4 border border-charcoal/5"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <VoteIcon className="w-5 h-5 text-wine-red" />
+                    <h3 className="font-display text-lg">
+                      为你最喜欢的一套投票
+                    </h3>
+                  </div>
+                  <p className="text-xs text-charcoal/50 mb-4">
+                    每套穿搭可以分别评分和点赞，但最终胜负按投票数决定
+                  </p>
+                  <div className="flex gap-3 overflow-x-auto pb-2">
+                    {poll.outfits.map((outfit) => {
+                      const stat = pollWithStats.outfitStats.find(
+                        (s) => s.outfitId === outfit.id,
+                      );
+                      const isVoted = userBallot?.outfitId === outfit.id;
+                      return (
+                        <button
+                          key={outfit.id}
+                          onClick={() => handleVote(outfit.id)}
+                          className={cn(
+                            "flex-shrink-0 w-24 relative transition-all",
+                            isVoted
+                              ? "opacity-100"
+                              : "opacity-80 hover:opacity-100",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "w-24 h-32 overflow-hidden relative border-2",
+                              isVoted
+                                ? "border-wine-red shadow-md"
+                                : "border-transparent",
+                            )}
+                          >
+                            <img
+                              src={outfit.imageUrl}
+                              alt={outfit.name}
+                              className="w-full h-full object-cover"
+                            />
+                            {isVoted && (
+                              <div className="absolute top-1 right-1 w-5 h-5 bg-wine-red rounded-full flex items-center justify-center">
+                                <Check className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-1 text-center">
+                            <div className="text-xs font-medium truncate">
+                              {outfit.name}
+                            </div>
+                            <div className="text-xs text-wine-red font-medium">
+                              {stat?.ballotCount || 0} 票
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+
+              {!isEnded && (
                 <p className="text-center text-sm text-charcoal/50 mt-4">
                   ← 左右滑动浏览搭配 →
                 </p>
@@ -217,22 +299,24 @@ export default function VotePage() {
                   >
                     <div className="pt-4 space-y-3">
                       {pollWithStats.outfitStats
-                        .sort((a, b) => b.averageScore - a.averageScore)
+                        .sort((a, b) => b.ballotCount - a.ballotCount)
                         .map((stat, index) => {
                           const outfit = poll.outfits.find(
                             (o) => o.id === stat.outfitId,
                           );
                           if (!outfit) return null;
 
-                          const maxScore = Math.max(
+                          const maxBallots = Math.max(
                             ...pollWithStats.outfitStats.map(
-                              (s) => s.averageScore,
+                              (s) => s.ballotCount,
                             ),
-                            5,
+                            1,
                           );
                           const percentage =
-                            maxScore > 0
-                              ? Math.round((stat.averageScore / maxScore) * 100)
+                            maxBallots > 0
+                              ? Math.round(
+                                  (stat.ballotCount / maxBallots) * 100,
+                                )
                               : 0;
 
                           return (
@@ -247,7 +331,7 @@ export default function VotePage() {
                                   className="w-full h-full object-cover"
                                 />
                                 {index === 0 &&
-                                  pollWithStats.totalRatings > 0 && (
+                                  pollWithStats.totalBallots > 0 && (
                                     <div className="absolute top-0 left-0 bg-amber-400 text-white text-xs px-1">
                                       <Trophy className="w-3 h-3" />
                                     </div>
@@ -259,7 +343,7 @@ export default function VotePage() {
                                     {outfit.name}
                                   </span>
                                   <span className="text-wine-red font-medium">
-                                    {stat.averageScore} 分
+                                    {stat.ballotCount} 票
                                   </span>
                                 </div>
                                 <div className="w-full h-1.5 bg-charcoal/10 rounded-full overflow-hidden">
@@ -279,7 +363,9 @@ export default function VotePage() {
                                   />
                                 </div>
                                 <div className="text-xs text-charcoal/50 mt-1 flex flex-wrap items-center gap-2">
-                                  <span>{stat.ratingCount} 人评分</span>
+                                  <span>{stat.averageScore} 分</span>
+                                  <span>·</span>
+                                  <span>{stat.ratingCount} 人评</span>
                                   <span>·</span>
                                   <span>{stat.likeCount} 赞</span>
                                 </div>
@@ -410,20 +496,20 @@ export default function VotePage() {
 
               <div className="space-y-3">
                 {pollWithStats.outfitStats
-                  .sort((a, b) => b.averageScore - a.averageScore)
+                  .sort((a, b) => b.ballotCount - a.ballotCount)
                   .map((stat, index) => {
                     const outfit = poll.outfits.find(
                       (o) => o.id === stat.outfitId,
                     );
                     if (!outfit) return null;
 
-                    const maxScore = Math.max(
-                      ...pollWithStats.outfitStats.map((s) => s.averageScore),
-                      5,
+                    const maxBallots = Math.max(
+                      ...pollWithStats.outfitStats.map((s) => s.ballotCount),
+                      1,
                     );
                     const percentage =
-                      maxScore > 0
-                        ? Math.round((stat.averageScore / maxScore) * 100)
+                      maxBallots > 0
+                        ? Math.round((stat.ballotCount / maxBallots) * 100)
                         : 0;
 
                     return (
@@ -437,7 +523,7 @@ export default function VotePage() {
                             alt={outfit.name}
                             className="w-full h-full object-cover"
                           />
-                          {index === 0 && pollWithStats.totalRatings > 0 && (
+                          {index === 0 && pollWithStats.totalBallots > 0 && (
                             <div className="absolute top-0 left-0 bg-amber-400 text-white text-xs px-1">
                               <Trophy className="w-3 h-3" />
                             </div>
@@ -449,7 +535,7 @@ export default function VotePage() {
                               {outfit.name}
                             </span>
                             <span className="text-wine-red font-medium">
-                              {stat.averageScore} 分
+                              {stat.ballotCount} 票
                             </span>
                           </div>
                           <div className="w-full h-1.5 bg-charcoal/10 rounded-full overflow-hidden">
@@ -467,7 +553,9 @@ export default function VotePage() {
                             />
                           </div>
                           <div className="text-xs text-charcoal/50 mt-1 flex flex-wrap items-center gap-2">
-                            <span>{stat.ratingCount} 人评分</span>
+                            <span>{stat.averageScore} 分</span>
+                            <span>·</span>
+                            <span>{stat.ratingCount} 人评</span>
                             <span>·</span>
                             <span>{stat.likeCount} 赞</span>
                           </div>
@@ -478,21 +566,27 @@ export default function VotePage() {
               </div>
 
               <div className="mt-4 pt-4 border-t border-charcoal/5">
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="grid grid-cols-4 gap-2 text-center">
                   <div>
-                    <div className="text-xl font-display font-bold text-wine-red">
+                    <div className="text-lg font-display font-bold text-wine-red">
+                      {pollWithStats.totalBallots}
+                    </div>
+                    <div className="text-xs text-charcoal/50">投票数</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-display font-bold text-charcoal">
                       {pollWithStats.totalParticipants}
                     </div>
                     <div className="text-xs text-charcoal/50">参与人数</div>
                   </div>
                   <div>
-                    <div className="text-xl font-display font-bold text-amber-500">
+                    <div className="text-lg font-display font-bold text-amber-500">
                       {pollWithStats.totalRatings}
                     </div>
                     <div className="text-xs text-charcoal/50">评分次数</div>
                   </div>
                   <div>
-                    <div className="text-xl font-display font-bold text-rose-500">
+                    <div className="text-lg font-display font-bold text-rose-500">
                       {pollWithStats.totalLikes}
                     </div>
                     <div className="text-xs text-charcoal/50">点赞总数</div>

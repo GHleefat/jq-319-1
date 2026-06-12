@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Poll, Vote, Comment, Outfit } from "@/types";
+import type { Poll, Vote, Comment, Outfit, Ballot } from "@/types";
 import { generateId, getPollWithStats, isPollEnded } from "@/utils/helpers";
 import { createInitialMockPolls } from "@/utils/mockData";
 
@@ -34,6 +34,9 @@ interface PollState {
 
   addComment: (pollId: string, userId: string, content: string) => void;
 
+  addBallot: (pollId: string, outfitId: string, userId: string) => void;
+  getUserBallot: (pollId: string, userId: string) => Ballot | undefined;
+
   setCurrentPoll: (id: string | null) => void;
 
   checkAndUpdatePollStatus: (pollId: string) => void;
@@ -64,6 +67,7 @@ export const usePollStore = create<PollState>()(
           status: "active",
           outfits,
           votes: [],
+          ballots: [],
           comments: [],
         };
 
@@ -152,6 +156,37 @@ export const usePollStore = create<PollState>()(
               : poll,
           ),
         }));
+      },
+
+      addBallot: (pollId, outfitId, userId) => {
+        set((state) => ({
+          polls: state.polls.map((poll) => {
+            if (poll.id !== pollId) return poll;
+            const existingBallot = poll.ballots.find(
+              (b) => b.userId === userId,
+            );
+            if (existingBallot && existingBallot.outfitId === outfitId) {
+              return poll;
+            }
+            const newBallot: Ballot = {
+              id: generateId(),
+              pollId,
+              outfitId,
+              userId,
+              createdAt: new Date().toISOString(),
+            };
+            const filteredBallots = poll.ballots.filter(
+              (b) => b.userId !== userId,
+            );
+            return { ...poll, ballots: [...filteredBallots, newBallot] };
+          }),
+        }));
+      },
+
+      getUserBallot: (pollId, userId) => {
+        const poll = get().polls.find((p) => p.id === pollId);
+        if (!poll) return undefined;
+        return poll.ballots.find((b) => b.userId === userId);
       },
 
       setCurrentPoll: (id) => {

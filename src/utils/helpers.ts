@@ -4,6 +4,7 @@ import type {
   PollWithStats,
   User,
   Vote,
+  Ballot,
   Comment,
   Outfit,
 } from "@/types";
@@ -46,6 +47,7 @@ export const formatDateTime = (dateString: string): string => {
 export const calculateOutfitStats = (
   outfit: Outfit,
   votes: Vote[],
+  ballots: Ballot[],
 ): OutfitStats => {
   const outfitVotes = votes.filter((v) => v.outfitId === outfit.id);
   const likeCount = outfitVotes.filter((v) => v.liked).length;
@@ -55,12 +57,14 @@ export const calculateOutfitStats = (
   const averageScore = ratingCount > 0 ? totalScore / ratingCount : 0;
 
   const participantCount = outfitVotes.length;
+  const ballotCount = ballots.filter((b) => b.outfitId === outfit.id).length;
 
   return {
     outfitId: outfit.id,
     participantCount,
     ratingCount,
     likeCount,
+    ballotCount,
     averageScore: Math.round(averageScore * 10) / 10,
     totalScore,
   };
@@ -68,20 +72,21 @@ export const calculateOutfitStats = (
 
 export const getPollWithStats = (poll: Poll): PollWithStats => {
   const outfitStats = poll.outfits.map((outfit) =>
-    calculateOutfitStats(outfit, poll.votes),
+    calculateOutfitStats(outfit, poll.votes, poll.ballots || []),
   );
 
   const uniqueUsers = new Set(poll.votes.map((v) => v.userId));
   const totalParticipants = uniqueUsers.size;
   const totalRatings = poll.votes.filter((v) => v.score > 0).length;
   const totalLikes = poll.votes.filter((v) => v.liked).length;
+  const totalBallots = (poll.ballots || []).length;
 
   let winnerId: string | null = null;
-  if (totalRatings > 0) {
+  if (totalBallots > 0) {
     const sorted = [...outfitStats].sort(
-      (a, b) => b.averageScore - a.averageScore,
+      (a, b) => b.ballotCount - a.ballotCount,
     );
-    if (sorted[0].averageScore > 0) {
+    if (sorted[0].ballotCount > 0) {
       winnerId = sorted[0].outfitId;
     }
   }
@@ -92,6 +97,7 @@ export const getPollWithStats = (poll: Poll): PollWithStats => {
     totalParticipants,
     totalRatings,
     totalLikes,
+    totalBallots,
     winnerId,
   };
 };

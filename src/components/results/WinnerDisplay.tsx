@@ -54,6 +54,14 @@ export default function WinnerDisplay({ outfit, stats }: WinnerDisplayProps) {
 
             <div className="flex justify-center gap-8">
               <div className="text-center">
+                <div className="text-3xl font-display font-bold text-amber-400">
+                  {stats.ballotCount}
+                </div>
+                <div className="text-xs text-white/60 uppercase tracking-wider">
+                  得票数
+                </div>
+              </div>
+              <div className="text-center">
                 <div className="text-3xl font-display font-bold">
                   {stats.averageScore}
                 </div>
@@ -67,14 +75,6 @@ export default function WinnerDisplay({ outfit, stats }: WinnerDisplayProps) {
                 </div>
                 <div className="text-xs text-white/60 uppercase tracking-wider">
                   点赞数
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-display font-bold">
-                  {stats.participantCount}
-                </div>
-                <div className="text-xs text-white/60 uppercase tracking-wider">
-                  参与人数
                 </div>
               </div>
             </div>
