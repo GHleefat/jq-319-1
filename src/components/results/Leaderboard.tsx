@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Trophy, Heart, Star } from "lucide-react";
+import { Trophy, Heart, Star, Users } from "lucide-react";
 import type { Outfit, OutfitStats } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,8 @@ export default function Leaderboard({ outfits, stats }: LeaderboardProps) {
       outfit,
       stat: stats.find((s) => s.outfitId === outfit.id) || {
         outfitId: outfit.id,
-        voteCount: 0,
+        participantCount: 0,
+        ratingCount: 0,
         likeCount: 0,
         averageScore: 0,
         totalScore: 0,
@@ -100,7 +101,7 @@ export default function Leaderboard({ outfits, stats }: LeaderboardProps) {
               />
             </div>
 
-            <div className="flex items-center gap-4 mt-2 text-sm text-charcoal/60">
+            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-charcoal/60">
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
                 <span>{stat.averageScore} 分</span>
@@ -109,7 +110,10 @@ export default function Leaderboard({ outfits, stats }: LeaderboardProps) {
                 <Heart className="w-3 h-3 text-wine-red fill-wine-red" />
                 <span>{stat.likeCount}</span>
               </div>
-              <span>{stat.voteCount} 票</span>
+              <span className="flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                {stat.ratingCount} 人评分
+              </span>
             </div>
           </div>
         </motion.div>

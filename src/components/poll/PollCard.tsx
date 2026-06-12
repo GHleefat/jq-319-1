@@ -68,7 +68,7 @@ export default function PollCard({ poll, index = 0 }: PollCardProps) {
             </div>
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4" />
-              <span>{pollWithStats.totalVotes} 票</span>
+              <span>{pollWithStats.totalParticipants} 人参与</span>
             </div>
           </div>
         </div>

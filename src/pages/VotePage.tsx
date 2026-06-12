@@ -151,7 +151,7 @@ export default function VotePage() {
                   </div>
                   <div className="flex items-center gap-1 text-charcoal/60">
                     <Users className="w-4 h-4" />
-                    <span>{pollWithStats.totalVotes} 票</span>
+                    <span>{pollWithStats.totalParticipants} 人参与</span>
                   </div>
                 </div>
               </div>
@@ -198,7 +198,7 @@ export default function VotePage() {
                     <BarChart3 className="w-5 h-5 text-wine-red" />
                     <span className="font-display text-lg">实时统计</span>
                     <span className="text-sm text-charcoal/50">
-                      ({pollWithStats.totalVotes} 票)
+                      ({pollWithStats.totalParticipants} 人参与)
                     </span>
                   </div>
                   <ChevronDown
@@ -247,7 +247,7 @@ export default function VotePage() {
                                   className="w-full h-full object-cover"
                                 />
                                 {index === 0 &&
-                                  pollWithStats.totalVotes > 0 && (
+                                  pollWithStats.totalRatings > 0 && (
                                     <div className="absolute top-0 left-0 bg-amber-400 text-white text-xs px-1">
                                       <Trophy className="w-3 h-3" />
                                     </div>
@@ -278,8 +278,10 @@ export default function VotePage() {
                                     )}
                                   />
                                 </div>
-                                <div className="text-xs text-charcoal/50 mt-1">
-                                  {stat.voteCount} 票 · {stat.likeCount} 赞
+                                <div className="text-xs text-charcoal/50 mt-1 flex flex-wrap items-center gap-2">
+                                  <span>{stat.ratingCount} 人评分</span>
+                                  <span>·</span>
+                                  <span>{stat.likeCount} 赞</span>
                                 </div>
                               </div>
                             </div>
@@ -435,7 +437,7 @@ export default function VotePage() {
                             alt={outfit.name}
                             className="w-full h-full object-cover"
                           />
-                          {index === 0 && pollWithStats.totalVotes > 0 && (
+                          {index === 0 && pollWithStats.totalRatings > 0 && (
                             <div className="absolute top-0 left-0 bg-amber-400 text-white text-xs px-1">
                               <Trophy className="w-3 h-3" />
                             </div>
@@ -464,8 +466,10 @@ export default function VotePage() {
                               )}
                             />
                           </div>
-                          <div className="text-xs text-charcoal/50 mt-1">
-                            {stat.voteCount} 票 · {stat.likeCount} 赞
+                          <div className="text-xs text-charcoal/50 mt-1 flex flex-wrap items-center gap-2">
+                            <span>{stat.ratingCount} 人评分</span>
+                            <span>·</span>
+                            <span>{stat.likeCount} 赞</span>
                           </div>
                         </div>
                       </div>
@@ -473,12 +477,26 @@ export default function VotePage() {
                   })}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-charcoal/5 text-center">
-                <div className="text-2xl font-display font-bold">
-                  {pollWithStats.totalVotes}
-                </div>
-                <div className="text-xs text-charcoal/50 uppercase tracking-wider">
-                  总投票数
+              <div className="mt-4 pt-4 border-t border-charcoal/5">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <div className="text-xl font-display font-bold text-wine-red">
+                      {pollWithStats.totalParticipants}
+                    </div>
+                    <div className="text-xs text-charcoal/50">参与人数</div>
+                  </div>
+                  <div>
+                    <div className="text-xl font-display font-bold text-amber-500">
+                      {pollWithStats.totalRatings}
+                    </div>
+                    <div className="text-xs text-charcoal/50">评分次数</div>
+                  </div>
+                  <div>
+                    <div className="text-xl font-display font-bold text-rose-500">
+                      {pollWithStats.totalLikes}
+                    </div>
+                    <div className="text-xs text-charcoal/50">点赞总数</div>
+                  </div>
                 </div>
               </div>
             </motion.div>

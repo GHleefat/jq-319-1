@@ -42,7 +42,8 @@ export interface Poll {
 
 export interface OutfitStats {
   outfitId: string;
-  voteCount: number;
+  participantCount: number;
+  ratingCount: number;
   likeCount: number;
   averageScore: number;
   totalScore: number;
@@ -50,6 +51,8 @@ export interface OutfitStats {
 
 export type PollWithStats = Poll & {
   outfitStats: OutfitStats[];
-  totalVotes: number;
+  totalParticipants: number;
+  totalRatings: number;
+  totalLikes: number;
   winnerId: string | null;
 };

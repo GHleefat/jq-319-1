@@ -8,8 +8,10 @@ import {
   ArrowRight,
   Home,
   ExternalLink,
+  Calendar,
 } from "lucide-react";
 import { usePollStore } from "@/store/usePollStore";
+import { formatDateTime } from "@/utils/helpers";
 
 export default function PollSuccessPage() {
   const { id } = useParams<{ id: string }>();
@@ -119,10 +121,13 @@ export default function PollSuccessPage() {
               <div className="text-xs text-charcoal/50">套搭配</div>
             </div>
             <div className="text-center p-3 bg-ivory-dark/30">
-              <div className="text-2xl font-display font-bold text-wine-red">
-                24h
+              <div className="flex items-center justify-center gap-1 text-wine-red mb-1">
+                <Calendar className="w-4 h-4" />
               </div>
-              <div className="text-xs text-charcoal/50">内有效</div>
+              <div className="text-xs font-medium text-charcoal/80">
+                {formatDateTime(poll.deadline)}
+              </div>
+              <div className="text-xs text-charcoal/50">截止时间</div>
             </div>
           </div>
 

@@ -71,10 +71,10 @@ export default function WinnerDisplay({ outfit, stats }: WinnerDisplayProps) {
               </div>
               <div className="text-center">
                 <div className="text-3xl font-display font-bold">
-                  {stats.voteCount}
+                  {stats.participantCount}
                 </div>
                 <div className="text-xs text-white/60 uppercase tracking-wider">
-                  总票数
+                  参与人数
                 </div>
               </div>
             </div>

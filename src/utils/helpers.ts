@@ -49,13 +49,17 @@ export const calculateOutfitStats = (
 ): OutfitStats => {
   const outfitVotes = votes.filter((v) => v.outfitId === outfit.id);
   const likeCount = outfitVotes.filter((v) => v.liked).length;
-  const totalScore = outfitVotes.reduce((sum, v) => sum + v.score, 0);
-  const averageScore =
-    outfitVotes.length > 0 ? totalScore / outfitVotes.length : 0;
+  const ratedVotes = outfitVotes.filter((v) => v.score > 0);
+  const ratingCount = ratedVotes.length;
+  const totalScore = ratedVotes.reduce((sum, v) => sum + v.score, 0);
+  const averageScore = ratingCount > 0 ? totalScore / ratingCount : 0;
+
+  const participantCount = outfitVotes.length;
 
   return {
     outfitId: outfit.id,
-    voteCount: outfitVotes.length,
+    participantCount,
+    ratingCount,
     likeCount,
     averageScore: Math.round(averageScore * 10) / 10,
     totalScore,
@@ -67,10 +71,13 @@ export const getPollWithStats = (poll: Poll): PollWithStats => {
     calculateOutfitStats(outfit, poll.votes),
   );
 
-  const totalVotes = poll.votes.length;
+  const uniqueUsers = new Set(poll.votes.map((v) => v.userId));
+  const totalParticipants = uniqueUsers.size;
+  const totalRatings = poll.votes.filter((v) => v.score > 0).length;
+  const totalLikes = poll.votes.filter((v) => v.liked).length;
 
   let winnerId: string | null = null;
-  if (totalVotes > 0) {
+  if (totalRatings > 0) {
     const sorted = [...outfitStats].sort(
       (a, b) => b.averageScore - a.averageScore,
     );
@@ -82,7 +89,9 @@ export const getPollWithStats = (poll: Poll): PollWithStats => {
   return {
     ...poll,
     outfitStats,
-    totalVotes,
+    totalParticipants,
+    totalRatings,
+    totalLikes,
     winnerId,
   };
 };
