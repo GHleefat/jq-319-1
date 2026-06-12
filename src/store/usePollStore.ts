@@ -177,6 +177,7 @@ export const usePollStore = create<PollState>()(
     }),
     {
       name: "outfit-poll-storage",
+      partialize: (state) => ({ polls: state.polls }),
     },
   ),
 );

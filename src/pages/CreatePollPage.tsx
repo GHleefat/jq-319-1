@@ -66,7 +66,7 @@ export default function CreatePollPage() {
         images,
       );
       setIsSubmitting(false);
-      navigate(`/vote/${pollId}`);
+      navigate(`/success/${pollId}`);
     }, 500);
   };
 

@@ -1,21 +1,33 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, BarChart3, Clock, Users, Share2 } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  Clock,
+  Users,
+  Share2,
+  ChevronDown,
+  Trophy,
+} from "lucide-react";
 import { usePollStore } from "@/store/usePollStore";
 import { useUserStore } from "@/store/useUserStore";
 import OutfitSwiper from "@/components/outfit/OutfitSwiper";
 import CommentList from "@/components/comment/CommentList";
 import UserSwitcher from "@/components/user/UserSwitcher";
+import Avatar from "@/components/common/Avatar";
 import { formatDate, getPollWithStats } from "@/utils/helpers";
+import { cn } from "@/lib/utils";
 
 export default function VotePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPollById, addVote, addComment, checkAndUpdatePollStatus } =
     usePollStore();
-  const { getCurrentUser } = useUserStore();
+  const { getCurrentUser, users, setCurrentUser } = useUserStore();
   const [showComments, setShowComments] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const poll = id ? getPollById(id) : undefined;
   const currentUser = getCurrentUser();
@@ -32,7 +44,7 @@ export default function VotePage() {
     }
   }, [id, checkAndUpdatePollStatus]);
 
-  if (!poll || !currentUser) {
+  if (!poll) {
     return (
       <div className="min-h-screen bg-ivory flex items-center justify-center">
         <div className="text-center">
@@ -70,6 +82,11 @@ export default function VotePage() {
       navigator.clipboard.writeText(window.location.href);
       alert("链接已复制到剪贴板！");
     }
+  };
+
+  const handleSwitchUser = (userId: string) => {
+    setCurrentUser(userId);
+    setShowUserMenu(false);
   };
 
   return (
@@ -112,20 +129,25 @@ export default function VotePage() {
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h1 className="font-display text-2xl lg:hidden">
+                <h1 className="font-display text-xl sm:text-2xl lg:hidden">
                   {poll.title}
                 </h1>
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-3 text-sm">
                   <div className="flex items-center gap-1 text-charcoal/60">
                     <Clock className="w-4 h-4" />
-                    <span>{formatDate(poll.deadline)}</span>
+                    <span className="hidden sm:inline">
+                      {formatDate(poll.deadline)}
+                    </span>
+                    <span className="sm:hidden">
+                      {formatDate(poll.deadline).split(" ")[0]}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1 text-charcoal/60">
                     <Users className="w-4 h-4" />
@@ -149,7 +171,7 @@ export default function VotePage() {
               <OutfitSwiper
                 outfits={poll.outfits}
                 votes={poll.votes}
-                userId={currentUser.id}
+                userId={currentUser?.id || ""}
                 onRate={handleRate}
                 disabled={isEnded}
               />
@@ -164,7 +186,183 @@ export default function VotePage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="lg:hidden"
+            >
+              <div className="bg-white p-4 border border-charcoal/5">
+                <button
+                  onClick={() => setShowStats(!showStats)}
+                  className="w-full flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-wine-red" />
+                    <span className="font-display text-lg">实时统计</span>
+                    <span className="text-sm text-charcoal/50">
+                      ({pollWithStats.totalVotes} 票)
+                    </span>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      "w-5 h-5 text-charcoal/40 transition-transform",
+                      showStats && "rotate-180",
+                    )}
+                  />
+                </button>
+
+                {showStats && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4 space-y-3">
+                      {pollWithStats.outfitStats
+                        .sort((a, b) => b.averageScore - a.averageScore)
+                        .map((stat, index) => {
+                          const outfit = poll.outfits.find(
+                            (o) => o.id === stat.outfitId,
+                          );
+                          if (!outfit) return null;
+
+                          const maxScore = Math.max(
+                            ...pollWithStats.outfitStats.map(
+                              (s) => s.averageScore,
+                            ),
+                            5,
+                          );
+                          const percentage =
+                            maxScore > 0
+                              ? Math.round((stat.averageScore / maxScore) * 100)
+                              : 0;
+
+                          return (
+                            <div
+                              key={stat.outfitId}
+                              className="flex items-center gap-3"
+                            >
+                              <div className="w-10 h-12 flex-shrink-0 overflow-hidden relative">
+                                <img
+                                  src={outfit.imageUrl}
+                                  alt={outfit.name}
+                                  className="w-full h-full object-cover"
+                                />
+                                {index === 0 &&
+                                  pollWithStats.totalVotes > 0 && (
+                                    <div className="absolute top-0 left-0 bg-amber-400 text-white text-xs px-1">
+                                      <Trophy className="w-3 h-3" />
+                                    </div>
+                                  )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span className="font-medium truncate">
+                                    {outfit.name}
+                                  </span>
+                                  <span className="text-wine-red font-medium">
+                                    {stat.averageScore} 分
+                                  </span>
+                                </div>
+                                <div className="w-full h-1.5 bg-charcoal/10 rounded-full overflow-hidden">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${percentage}%` }}
+                                    transition={{
+                                      delay: 0.1 + index * 0.05,
+                                      duration: 0.5,
+                                    }}
+                                    className={cn(
+                                      "h-full rounded-full",
+                                      index === 0
+                                        ? "bg-amber-400"
+                                        : "bg-wine-red",
+                                    )}
+                                  />
+                                </div>
+                                <div className="text-xs text-charcoal/50 mt-1">
+                                  {stat.voteCount} 票 · {stat.likeCount} 赞
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
+              className="lg:hidden"
+            >
+              <div className="bg-white p-4 border border-charcoal/5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-charcoal/60">当前身份</span>
+                  </div>
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-2 p-1 -mr-1 hover:bg-ivory-dark/50 transition-colors"
+                  >
+                    {currentUser && (
+                      <>
+                        <Avatar
+                          src={currentUser.avatar}
+                          alt={currentUser.name}
+                          size="sm"
+                        />
+                        <span className="text-sm">{currentUser.name}</span>
+                      </>
+                    )}
+                    <ChevronDown
+                      className={cn(
+                        "w-4 h-4 text-charcoal/40 transition-transform",
+                        showUserMenu && "rotate-180",
+                      )}
+                    />
+                  </button>
+                </div>
+
+                {showUserMenu && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-3 space-y-1">
+                      <div className="text-xs text-charcoal/40 px-2 py-1 uppercase tracking-wider">
+                        切换身份模拟投票
+                      </div>
+                      {users.map((user) => (
+                        <button
+                          key={user.id}
+                          onClick={() => handleSwitchUser(user.id)}
+                          className={cn(
+                            "w-full flex items-center gap-3 p-2 text-left hover:bg-ivory-dark/30 transition-colors",
+                            user.id === currentUser?.id && "bg-ivory-dark/50",
+                          )}
+                        >
+                          <Avatar src={user.avatar} alt={user.name} size="sm" />
+                          <span className="text-sm">{user.name}</span>
+                          {user.id === currentUser?.id && (
+                            <span className="ml-auto text-wine-red text-xs">
+                              当前
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
               className="lg:hidden"
             >
               <button
@@ -209,58 +407,70 @@ export default function VotePage() {
               </div>
 
               <div className="space-y-3">
-                {pollWithStats.outfitStats.map((stat, index) => {
-                  const outfit = poll.outfits.find(
-                    (o) => o.id === stat.outfitId,
-                  );
-                  if (!outfit) return null;
+                {pollWithStats.outfitStats
+                  .sort((a, b) => b.averageScore - a.averageScore)
+                  .map((stat, index) => {
+                    const outfit = poll.outfits.find(
+                      (o) => o.id === stat.outfitId,
+                    );
+                    if (!outfit) return null;
 
-                  const percentage =
-                    pollWithStats.totalVotes > 0
-                      ? Math.round(
-                          (stat.voteCount / pollWithStats.totalVotes) * 100,
-                        )
-                      : 0;
+                    const maxScore = Math.max(
+                      ...pollWithStats.outfitStats.map((s) => s.averageScore),
+                      5,
+                    );
+                    const percentage =
+                      maxScore > 0
+                        ? Math.round((stat.averageScore / maxScore) * 100)
+                        : 0;
 
-                  return (
-                    <div
-                      key={stat.outfitId}
-                      className="flex items-center gap-3"
-                    >
-                      <div className="w-10 h-12 flex-shrink-0 overflow-hidden">
-                        <img
-                          src={outfit.imageUrl}
-                          alt={outfit.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="font-medium truncate">
-                            {outfit.name}
-                          </span>
-                          <span className="text-wine-red font-medium">
-                            {stat.averageScore} 分
-                          </span>
-                        </div>
-                        <div className="w-full h-1.5 bg-charcoal/10 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${percentage}%` }}
-                            transition={{
-                              delay: 0.3 + index * 0.1,
-                              duration: 0.5,
-                            }}
-                            className="h-full bg-wine-red rounded-full"
+                    return (
+                      <div
+                        key={stat.outfitId}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="w-10 h-12 flex-shrink-0 overflow-hidden relative">
+                          <img
+                            src={outfit.imageUrl}
+                            alt={outfit.name}
+                            className="w-full h-full object-cover"
                           />
+                          {index === 0 && pollWithStats.totalVotes > 0 && (
+                            <div className="absolute top-0 left-0 bg-amber-400 text-white text-xs px-1">
+                              <Trophy className="w-3 h-3" />
+                            </div>
+                          )}
                         </div>
-                        <div className="text-xs text-charcoal/50 mt-1">
-                          {stat.voteCount} 票 · {stat.likeCount} 赞
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-medium truncate">
+                              {outfit.name}
+                            </span>
+                            <span className="text-wine-red font-medium">
+                              {stat.averageScore} 分
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-charcoal/10 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${percentage}%` }}
+                              transition={{
+                                delay: 0.3 + index * 0.1,
+                                duration: 0.5,
+                              }}
+                              className={cn(
+                                "h-full rounded-full",
+                                index === 0 ? "bg-amber-400" : "bg-wine-red",
+                              )}
+                            />
+                          </div>
+                          <div className="text-xs text-charcoal/50 mt-1">
+                            {stat.voteCount} 票 · {stat.likeCount} 赞
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
 
               <div className="mt-4 pt-4 border-t border-charcoal/5 text-center">

@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { User } from "@/types";
 import { mockUsers, getDefaultUser } from "@/utils/mockData";
 
@@ -13,32 +12,25 @@ interface UserState {
   addUser: (user: User) => void;
 }
 
-export const useUserStore = create<UserState>()(
-  persist(
-    (set, get) => ({
-      users: mockUsers,
-      currentUserId: getDefaultUser().id,
+export const useUserStore = create<UserState>()((set, get) => ({
+  users: mockUsers,
+  currentUserId: getDefaultUser().id,
 
-      setCurrentUser: (userId) => {
-        set({ currentUserId: userId });
-      },
+  setCurrentUser: (userId) => {
+    set({ currentUserId: userId });
+  },
 
-      getCurrentUser: () => {
-        return get().users.find((u) => u.id === get().currentUserId);
-      },
+  getCurrentUser: () => {
+    return get().users.find((u) => u.id === get().currentUserId);
+  },
 
-      getUserById: (userId) => {
-        return get().users.find((u) => u.id === userId);
-      },
+  getUserById: (userId) => {
+    return get().users.find((u) => u.id === userId);
+  },
 
-      addUser: (user) => {
-        set((state) => ({
-          users: [...state.users, user],
-        }));
-      },
-    }),
-    {
-      name: "user-storage",
-    },
-  ),
-);
+  addUser: (user) => {
+    set((state) => ({
+      users: [...state.users, user],
+    }));
+  },
+}));
